@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2b2b2b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Eudia">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<title>Eudia</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* Sibling brand of Komos: same charcoal bars, light grey ground and white cards; accent moves from Komos orange to clear-sky blue. */
+:root{
+ --bar:#2b2b2b;--bar-ink:#f2f2f2;--bar-mute:#a9a9a9;
+ --bg:#f4f4f4;--card:#ffffff;--ink:#222222;--mute:#666666;--line:#e6e6e6;--soft:#eeeeee;
+ --acc:#0277bd;--acc-hi:#4fc3f7;--acc-ink:#ffffff;--accs:#e3f3fc;
+ --ok:#1e8449;--warn:#c27c0e;--bad:#c0392b;--yel:#c9a000;--rain:#5c6bc0;
+ --shadow:0 1px 3px rgba(0,0,0,.1);
+}
+@media (prefers-color-scheme:dark){:root{--bar:#151515;--bar-ink:#f2f2f2;--bar-mute:#9a9a9a;--bg:#1d1d1d;--card:#282828;--ink:#ececec;--mute:#a3a3a3;--line:#3a3a3a;--soft:#333333;--acc:#4fc3f7;--acc-hi:#4fc3f7;--acc-ink:#0b2533;--accs:#16303e;--ok:#4cc27a;--warn:#e3a33b;--bad:#ef6b5c;--yel:#e8c547;--rain:#8c9eff;--shadow:0 1px 3px rgba(0,0,0,.5);color-scheme:dark}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
+button,.day,.tabbar button{touch-action:manipulation;user-select:none;-webkit-user-select:none}
+h1{margin:0}h2{font-size:16px;margin:0 0 10px;font-weight:700}h3{font-size:14px;margin:16px 0 8px;font-weight:700}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input,select,button{font:inherit;font-size:16px;color:var(--ink);background:var(--card);border:1px solid #cccccc;border-radius:4px;padding:7px 10px}
+@media (prefers-color-scheme:dark){input,select{border-color:var(--line)}}
+button{cursor:pointer;border:none;background:var(--soft);color:var(--ink)}
+button.pri{background:var(--acc);color:var(--acc-ink);font-weight:600}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+button[disabled]{opacity:.55;cursor:default}
+
+/* header: charcoal brand bar + light search bar, as in Komos */
+header{position:sticky;top:0;z-index:5;box-shadow:0 1px 0 var(--line)}
+.bar-dark{background:var(--bar);color:var(--bar-ink);display:flex;align-items:center;gap:12px;
+ padding:calc(10px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 10px max(16px,env(safe-area-inset-left))}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand svg{flex:0 0 auto}
+#title{font-size:1.5em;font-weight:800;letter-spacing:.02em;color:var(--acc-hi);line-height:1}
+.tag{color:var(--bar-mute);font-size:12px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-dark .sp{flex:1}
+.bar-dark select,.bar-dark button{background:transparent;color:var(--bar-ink);border:1px solid #4a4a4a;padding:6px 8px;font-size:14px}
+.bar-dark select option{color:#222}
+.bar-dark button:hover,.bar-dark select:hover{background:rgba(255,255,255,.08)}
+.bar-light{background:var(--card);padding:10px max(16px,env(safe-area-inset-right)) 10px max(16px,env(safe-area-inset-left))}
+#q{flex:1;min-width:120px}
+.res{border:1px solid var(--line);border-radius:6px;margin:8px max(16px,env(safe-area-inset-right)) 0 max(16px,env(safe-area-inset-left));background:var(--card);box-shadow:0 4px 14px rgba(0,0,0,.15);overflow:hidden}
+.res div{padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--line)}.res div:last-child{border-bottom:none}.res div:hover{background:var(--accs)}
+
+main{max-width:1000px;margin:0 auto;padding:14px max(16px,env(safe-area-inset-right)) calc(92px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.loc{font-weight:800;font-size:18px}
+.card{background:var(--card);border-radius:6px;padding:16px;margin-bottom:16px;box-shadow:var(--shadow)}
+.small{font-size:12px;color:var(--mute)}
+.hide{display:none}
+
+/* day strip: like Komos item buttons, orange border when selected */
+.days{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;scrollbar-width:none}
+.days::-webkit-scrollbar{display:none}
+.day{min-width:112px;background:var(--card);border:2px solid var(--soft);border-radius:6px;padding:10px 8px;cursor:pointer;text-align:center;box-shadow:var(--shadow)}
+.day:hover{border-color:var(--acc)}
+.day.on{border-color:var(--acc);background:var(--accs)}
+.day .d{font-size:12px;color:var(--mute);font-weight:600;text-transform:capitalize}
+.day .ic{font-size:30px;line-height:1.25}
+.t{font-weight:800;font-size:17px}.tmin{color:var(--mute);font-weight:600}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:700;letter-spacing:.02em}
+.b-high{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.b-medium{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.b-low{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:4px;vertical-align:middle}
+.l1{background:var(--yel)}.l2{background:var(--warn)}.l3{background:var(--bad)}
+
+.daytitle{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.daytitle h2{margin:0;text-transform:capitalize}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{border:1px solid var(--line);border-radius:6px;padding:10px 12px;font-variant-numeric:tabular-nums}
+.kpi .v{font-size:22px;font-weight:800}.kpi .s{font-size:12px;color:var(--mute)}
+.kpi .lbl{font-size:12px;font-weight:700;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
+.bar{height:5px;background:var(--soft);border-radius:3px;overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;background:var(--acc)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.tbl th,.tbl td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.tbl th{font-size:12px;color:var(--mute);font-weight:700}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.scroll{overflow-x:auto}
+.out{color:var(--bad);font-weight:800}
+.risk{display:flex;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid var(--line)}
+.risk:last-child{border-bottom:none}
+.lv1{color:var(--yel);font-weight:700}.lv2{color:var(--warn);font-weight:700}.lv3{color:var(--bad);font-weight:700}
+.chartbox{position:relative;height:240px}
+.err{color:var(--bad);font-weight:700}
+label.f{display:flex;flex-direction:column;font-size:12px;color:var(--mute);gap:3px}
+ol li{margin-bottom:6px}
+a{color:var(--acc)}
+.banner{background:var(--bad);color:#fff;text-align:center;font-weight:700;padding:8px 12px;border-radius:6px;margin-bottom:12px;font-size:13px}
+.spin{display:inline-block;animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+
+/* bottom tab bar: charcoal like the top bar, orange active tab */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;background:var(--bar);padding:6px max(8px,env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}
+.tabbar button{flex:1;border:none;background:transparent;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:var(--bar-mute);padding:6px 0;border-radius:6px}
+.tabbar button svg{width:22px;height:22px}
+.tabbar button.on{color:var(--acc-hi);font-weight:700}
+@media (max-width:480px){.tbl{font-size:12px}.tbl th,.tbl td{padding:6px 3px}.tbl th{white-space:normal}.tag{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar-dark">
+    <div class="brand"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><path d="M6 14 C26 14 30 32 52 32" fill="none" stroke="#f2f2f2" stroke-width="5" stroke-linecap="round"/><path d="M6 32 L52 32" fill="none" stroke="#a9a9a9" stroke-width="5" stroke-linecap="round"/><path d="M6 50 C26 50 30 32 52 32" fill="none" stroke="#f2f2f2" stroke-width="5" stroke-linecap="round"/><circle cx="53" cy="32" r="9" fill="#4fc3f7"/></svg><div><h1 id="title">Eudia</h1><div class="tag" id="tagline"></div></div></div>
+    <div class="sp"></div>
+    <button id="btnRefresh" aria-label="Refresh">⟳</button>
+    <select id="lang" aria-label="Language">
+      <option value="it">IT</option><option value="en">EN</option><option value="es">ES</option><option value="fr">FR</option><option value="de">DE</option>
+    </select>
+  </div>
+  <div class="bar-light row">
+    <input id="q" type="search" autocomplete="off">
+    <button id="btnSearch" class="pri"></button>
+    <button id="btnGeo" aria-label="GPS">📍</button>
+    <select id="days"></select>
+  </div>
+  <div id="results" class="res hide"></div>
+</header>
+<main>
+  <div class="row" style="justify-content:space-between"><div class="loc" id="locName"></div><div id="status" class="small"></div></div>
+  <div id="banner"></div>
+  <section id="view"></section>
+  <p class="small" id="attrib"></p>
+</main>
+<nav class="tabbar" id="tabs"></nav>
+<script>
+/* ---------- i18n ---------- */
+const I18N={
+it:{calTitle:'Calibrazione sui dati passati',calHint:'L’app confronta le previsioni fatte da ogni modello nei giorni scorsi con quanto è successo davvero e ricava pesi e correzioni per questa località.',method:'Metodo di combinazione',m_auto:'Automatico (il migliore nella verifica)',m_prior:'Pesi a priori (fissi)',m_inv:'Inverso dell’errore + correzione bias',m_sup:'Superensemble (Krishnamurti)',m_bma:'Bayesian Model Averaging (Raftery)',truth:'Riferimento “realtà”',t_analysis:'Analisi multi-modello (fino a ieri)',t_era5:'Rianalisi ERA5 (ritardo ~5 giorni)',period:'Periodo di addestramento',calRun:'Ricalcola ora',calBusy:'Calibrazione in corso…',calDone:'Calibrato il',calNone:'Non ancora calibrato',calDaysUsed:'giorni verificati',calErr:'Calibrazione non riuscita',oos:'Verifica fuori campione (errore medio, più basso è meglio)',oosHint:'Pesi stimati sui primi 2/3 del periodo e verificati sull’ultimo 1/3. In grassetto il metodo migliore.',e_mean:'Media semplice',e_best:'Miglior modello',e_inv:'Inverso errore',e_sup:'Superensemble',e_bma:'BMA',perModel:'Prestazioni per modello (T max)',mae1:'Errore 1 g',mae3:'Errore 3 gg',bias1:'Bias 1 g',calW:'Peso appreso',calibrated:'Calibrato',raw:'Grezzo',spread:'Incertezza ±',variableCol:'Variabile',lead:'Anticipo',m6:'Calibrazione: l’app scarica le previsioni che ogni modello aveva emesso da 1 a 5 giorni prima per ciascun giorno del periodo scelto e le confronta con il riferimento (analisi multi-modello oppure rianalisi ERA5). Per ogni variabile e anticipo stima errore medio (bias) e accuratezza di ogni modello. Il metodo “inverso dell’errore” corregge il bias e pesa ogni modello con 1/errore². Il superensemble (Krishnamurti 1999) stima i pesi con una regressione regolarizzata sulle anomalie. Il BMA (Raftery 2005) stima pesi e incertezza con l’algoritmo EM e fornisce una distribuzione di probabilità calibrata, usata per le probabilità di superamento soglia.',offline:'Offline: dati salvati dell’ultimo aggiornamento',updated:'Aggiornato',geoHttps:'La posizione GPS richiede una connessione https: cerca la località per nome',appTitle:'Eudia',tagline:'Il confronto tra i modelli meteo',searchPh:'Località',search:'Cerca',days:'giorni',tabForecast:'Previsione',tabModels:'Modelli',tabAlerts:'Allerte',tabMethod:'Metodo',loading:'Scarico i modelli…',error:'Errore nel caricamento dei dati',noResults:'Nessun risultato',noModels:'Attiva almeno un modello',consensus:'Consenso',agreement:'Accordo modelli',confidence:'Affidabilità',high:'alta',medium:'media',low:'bassa',tmax:'T max',tmin:'T min',precip:'Pioggia',precipProb:'Prob. pioggia',gust:'Raffiche',snow:'Neve',wind:'Vento',models:'modelli',members:'membri',range:'Intervallo modelli',ens1090:'Ensemble 10–90%',weight:'Peso',model:'Modello',hourlyTemp:'Temperatura oraria (°C)',hourlyPrecip:'Precipitazione oraria (mm)',consensusLine:'Consenso',ensBand:'Ensemble 10–90%',probHour:'Prob. ≥0,1 mm (%)',risks:'Rischi meteo',noRisks:'Nessun rischio significativo',riskHeat:'Caldo intenso (≥35 °C)',riskFrost:'Gelo (≤0 °C)',riskRain:'Pioggia forte (≥30 mm)',riskGust:'Raffiche forti (≥60 km/h)',riskSnow:'Neve (≥2 cm)',riskStorm:'Temporali',lvl1:'Attenzione',lvl2:'Allerta',lvl3:'Allerta elevata',myAlerts:'Le mie regole di allerta',addRule:'Aggiungi regola',variable:'Variabile',condition:'Condizione',threshold:'Soglia',minProb:'Prob. minima %',ruleName:'Nome (facoltativo)',del:'Elimina',triggered:'Regole scattate',noneTriggered:'Nessuna regola scattata per questa località',noRules:'Nessuna regola definita',enableNotif:'Attiva notifiche',notifOn:'Notifiche attive',modelHint:'Attiva/disattiva i modelli e regola il loro peso nel consenso.',org:'Ente',resolution:'Risoluzione',reset:'Ripristina',apply:'Aggiorna previsione',officialWarnings:'Allerte ufficiali: MeteoAlarm e Protezione Civile',attribution:'Dati: Open-Meteo.com (CC BY 4.0), da servizi meteorologici nazionali. Prototipo: non sostituisce le allerte ufficiali.',outlierNote:'In rosso i modelli molto distanti dal consenso.',ensSystems:'Sistemi ensemble',na:'n.d.',methodTitle:'Come funziona',refs:'Riferimenti scientifici',today:'Oggi',prob:'prob.',ensNone:'Ensemble non disponibile',
+g_clear:'Sereno',g_partly:'Poco nuvoloso',g_cloudy:'Nuvoloso',g_fog:'Nebbia',g_drizzle:'Pioviggine',g_rain:'Pioggia',g_showers:'Rovesci',g_snow:'Neve',g_thunder:'Temporale',
+m1:'Per ogni località l’app scarica in parallelo le previsioni di fino a 11 modelli deterministici (ECMWF IFS e AIFS, ICON, ICON-2I italiano, ARPEGE/AROME, UK Met Office, GFS, GEM, JMA, CMA, BOM) e di 3 sistemi ensemble (ECMWF ENS, NCEP GEFS, DWD ICON-EPS) per un totale di oltre 100 scenari.',
+m2:'Il consenso è una media pesata tra modelli: i pesi a priori riflettono l’affidabilità nota di ciascun modello e i modelli ad alta risoluzione pesano di più nei primi 3 giorni. È l’approccio “multi-model ensemble”: combinare modelli diversi riduce gli errori sistematici dei singoli.',
+m3:'L’accordo misura la dispersione dei modelli rispetto a una tolleranza per variabile (2 °C per le temperature, 10 km/h per le raffiche, tolleranza relativa per la pioggia). L’affidabilità combina accordo tra modelli (60%) e ampiezza dell’ensemble (40%).',
+m4:'Le probabilità (pioggia, rischi, regole di allerta) sono calcolate come quota dei membri ensemble che superano la soglia (60%) più quota pesata dei modelli deterministici (40%).',
+m5:'Limiti del prototipo: la verifica usa al massimo 60 giorni e il riferimento non è una stazione meteo reale; la calibrazione vale per la località scelta; unità metriche.'},
+en:{calTitle:'Calibration on past data',calHint:'The app compares what each model forecast in recent days with what actually happened and learns weights and corrections for this location.',method:'Combination method',m_auto:'Automatic (best in verification)',m_prior:'Prior weights (fixed)',m_inv:'Inverse error + bias correction',m_sup:'Superensemble (Krishnamurti)',m_bma:'Bayesian Model Averaging (Raftery)',truth:'Reference “truth”',t_analysis:'Multi-model analysis (up to yesterday)',t_era5:'ERA5 reanalysis (~5 day delay)',period:'Training period',calRun:'Recalculate now',calBusy:'Calibrating…',calDone:'Calibrated on',calNone:'Not calibrated yet',calDaysUsed:'days verified',calErr:'Calibration failed',oos:'Out-of-sample check (mean error, lower is better)',oosHint:'Weights fitted on the first 2/3 of the period and tested on the last 1/3. Best method in bold.',e_mean:'Simple mean',e_best:'Best model',e_inv:'Inverse error',e_sup:'Superensemble',e_bma:'BMA',perModel:'Per-model performance (Max T)',mae1:'Error 1 d',mae3:'Error 3 d',bias1:'Bias 1 d',calW:'Learned weight',calibrated:'Calibrated',raw:'Raw',spread:'Uncertainty ±',variableCol:'Variable',lead:'Lead',m6:'Calibration: the app downloads what each model forecast 1 to 5 days ahead for every day of the chosen period and compares it with the reference (multi-model analysis or ERA5 reanalysis). For each variable and lead time it estimates each model’s mean error (bias) and accuracy. “Inverse error” removes the bias and weights each model by 1/error². The superensemble (Krishnamurti 1999) fits weights with a regularized regression on anomalies. BMA (Raftery 2005) fits weights and spread with the EM algorithm and gives a calibrated probability distribution, used for threshold probabilities.',offline:'Offline: showing last saved data',updated:'Updated',geoHttps:'GPS location needs an https connection: search the place by name',appTitle:'Eudia',tagline:'Weather models, compared',searchPh:'Place',search:'Search',days:'days',tabForecast:'Forecast',tabModels:'Models',tabAlerts:'Alerts',tabMethod:'Method',loading:'Downloading models…',error:'Error loading data',noResults:'No results',noModels:'Enable at least one model',consensus:'Consensus',agreement:'Model agreement',confidence:'Confidence',high:'high',medium:'medium',low:'low',tmax:'Max T',tmin:'Min T',precip:'Rain',precipProb:'Rain prob.',gust:'Gusts',snow:'Snow',wind:'Wind',models:'models',members:'members',range:'Model range',ens1090:'Ensemble 10–90%',weight:'Weight',model:'Model',hourlyTemp:'Hourly temperature (°C)',hourlyPrecip:'Hourly precipitation (mm)',consensusLine:'Consensus',ensBand:'Ensemble 10–90%',probHour:'Prob. ≥0.1 mm (%)',risks:'Weather risks',noRisks:'No significant risk',riskHeat:'Extreme heat (≥35 °C)',riskFrost:'Frost (≤0 °C)',riskRain:'Heavy rain (≥30 mm)',riskGust:'Strong gusts (≥60 km/h)',riskSnow:'Snow (≥2 cm)',riskStorm:'Thunderstorms',lvl1:'Watch',lvl2:'Warning',lvl3:'Severe warning',myAlerts:'My alert rules',addRule:'Add rule',variable:'Variable',condition:'Condition',threshold:'Threshold',minProb:'Min prob. %',ruleName:'Name (optional)',del:'Delete',triggered:'Triggered rules',noneTriggered:'No rule triggered for this location',noRules:'No rules defined',enableNotif:'Enable notifications',notifOn:'Notifications on',modelHint:'Enable/disable models and tune their weight in the consensus.',org:'Agency',resolution:'Resolution',reset:'Reset',apply:'Update forecast',officialWarnings:'Official warnings: MeteoAlarm',attribution:'Data: Open-Meteo.com (CC BY 4.0), from national weather services. Prototype: not a substitute for official warnings.',outlierNote:'Red marks models far from the consensus.',ensSystems:'Ensemble systems',na:'n/a',methodTitle:'How it works',refs:'Scientific references',today:'Today',prob:'prob.',ensNone:'Ensemble unavailable',
+g_clear:'Clear',g_partly:'Partly cloudy',g_cloudy:'Cloudy',g_fog:'Fog',g_drizzle:'Drizzle',g_rain:'Rain',g_showers:'Showers',g_snow:'Snow',g_thunder:'Thunderstorm',
+m1:'For each location the app downloads in parallel up to 11 deterministic models (ECMWF IFS and AIFS, ICON, Italian ICON-2I, ARPEGE/AROME, UK Met Office, GFS, GEM, JMA, CMA, BOM) and 3 ensemble systems (ECMWF ENS, NCEP GEFS, DWD ICON-EPS): more than 100 scenarios in total.',
+m2:'The consensus is a weighted mean across models: prior weights reflect each model’s known skill, and high-resolution models weigh more in the first 3 days. This is the multi-model ensemble approach: combining different models cancels part of their individual systematic errors.',
+m3:'Agreement measures model spread against a per-variable tolerance (2 °C for temperatures, 10 km/h for gusts, relative tolerance for rain). Confidence combines model agreement (60%) and ensemble width (40%).',
+m4:'Probabilities (rain, risks, alert rules) are the share of ensemble members exceeding the threshold (60%) plus the weighted share of deterministic models (40%).',
+m5:'Prototype limits: verification uses at most 60 days and the reference is not a real weather station; calibration applies to the chosen location; metric units.'},
+es:{offline:'Sin conexión: últimos datos guardados',updated:'Actualizado',tagline:'Comparación de modelos meteorológicos',searchPh:'Buscar lugar…',search:'Buscar',days:'días',tabForecast:'Pronóstico',tabModels:'Modelos',tabAlerts:'Alertas',tabMethod:'Método',loading:'Descargando modelos…',error:'Error al cargar los datos',noResults:'Sin resultados',noModels:'Activa al menos un modelo',consensus:'Consenso',agreement:'Acuerdo de modelos',confidence:'Fiabilidad',high:'alta',medium:'media',low:'baja',tmax:'T máx',tmin:'T mín',precip:'Lluvia',precipProb:'Prob. lluvia',gust:'Rachas',snow:'Nieve',wind:'Viento',models:'modelos',members:'miembros',range:'Rango de modelos',weight:'Peso',model:'Modelo',hourlyTemp:'Temperatura horaria (°C)',hourlyPrecip:'Precipitación horaria (mm)',consensusLine:'Consenso',risks:'Riesgos meteorológicos',noRisks:'Sin riesgos significativos',riskHeat:'Calor intenso (≥35 °C)',riskFrost:'Helada (≤0 °C)',riskRain:'Lluvia fuerte (≥30 mm)',riskGust:'Rachas fuertes (≥60 km/h)',riskSnow:'Nieve (≥2 cm)',riskStorm:'Tormentas',lvl1:'Atención',lvl2:'Alerta',lvl3:'Alerta alta',myAlerts:'Mis reglas de alerta',addRule:'Añadir regla',variable:'Variable',condition:'Condición',threshold:'Umbral',minProb:'Prob. mínima %',ruleName:'Nombre (opcional)',del:'Eliminar',triggered:'Reglas activadas',noneTriggered:'Ninguna regla activada',noRules:'Sin reglas',enableNotif:'Activar notificaciones',notifOn:'Notificaciones activas',modelHint:'Activa/desactiva modelos y ajusta su peso.',org:'Organismo',resolution:'Resolución',reset:'Restablecer',apply:'Actualizar',outlierNote:'En rojo, modelos lejos del consenso.',ensSystems:'Sistemas ensemble',methodTitle:'Cómo funciona',refs:'Referencias científicas',today:'Hoy',prob:'prob.',
+g_clear:'Despejado',g_partly:'Poco nuboso',g_cloudy:'Nublado',g_fog:'Niebla',g_drizzle:'Llovizna',g_rain:'Lluvia',g_showers:'Chubascos',g_snow:'Nieve',g_thunder:'Tormenta'},
+fr:{offline:'Hors ligne : dernières données enregistrées',updated:'Mis à jour',tagline:'Comparaison des modèles météo',searchPh:'Chercher un lieu…',search:'Chercher',days:'jours',tabForecast:'Prévision',tabModels:'Modèles',tabAlerts:'Alertes',tabMethod:'Méthode',loading:'Téléchargement des modèles…',error:'Erreur de chargement',noResults:'Aucun résultat',noModels:'Activez au moins un modèle',consensus:'Consensus',agreement:'Accord des modèles',confidence:'Fiabilité',high:'haute',medium:'moyenne',low:'faible',tmax:'T max',tmin:'T min',precip:'Pluie',precipProb:'Prob. pluie',gust:'Rafales',snow:'Neige',wind:'Vent',models:'modèles',members:'membres',range:'Écart des modèles',weight:'Poids',model:'Modèle',hourlyTemp:'Température horaire (°C)',hourlyPrecip:'Précipitation horaire (mm)',consensusLine:'Consensus',risks:'Risques météo',noRisks:'Aucun risque significatif',riskHeat:'Forte chaleur (≥35 °C)',riskFrost:'Gel (≤0 °C)',riskRain:'Fortes pluies (≥30 mm)',riskGust:'Fortes rafales (≥60 km/h)',riskSnow:'Neige (≥2 cm)',riskStorm:'Orages',lvl1:'Vigilance',lvl2:'Alerte',lvl3:'Alerte forte',myAlerts:'Mes règles d’alerte',addRule:'Ajouter une règle',variable:'Variable',condition:'Condition',threshold:'Seuil',minProb:'Prob. min. %',ruleName:'Nom (facultatif)',del:'Supprimer',triggered:'Règles déclenchées',noneTriggered:'Aucune règle déclenchée',noRules:'Aucune règle',enableNotif:'Activer les notifications',notifOn:'Notifications actives',modelHint:'Activez/désactivez les modèles et réglez leur poids.',org:'Organisme',resolution:'Résolution',reset:'Réinitialiser',apply:'Mettre à jour',outlierNote:'En rouge, les modèles éloignés du consensus.',ensSystems:'Systèmes d’ensemble',methodTitle:'Fonctionnement',refs:'Références scientifiques',today:'Aujourd’hui',prob:'prob.',
+g_clear:'Ensoleillé',g_partly:'Peu nuageux',g_cloudy:'Nuageux',g_fog:'Brouillard',g_drizzle:'Bruine',g_rain:'Pluie',g_showers:'Averses',g_snow:'Neige',g_thunder:'Orage'},
+de:{offline:'Offline: zuletzt gespeicherte Daten',updated:'Aktualisiert',tagline:'Vergleich von Wettermodellen',searchPh:'Ort suchen…',search:'Suchen',days:'Tage',tabForecast:'Vorhersage',tabModels:'Modelle',tabAlerts:'Warnungen',tabMethod:'Methode',loading:'Modelle werden geladen…',error:'Fehler beim Laden',noResults:'Keine Ergebnisse',noModels:'Mindestens ein Modell aktivieren',consensus:'Konsens',agreement:'Modellübereinstimmung',confidence:'Zuverlässigkeit',high:'hoch',medium:'mittel',low:'niedrig',tmax:'T max',tmin:'T min',precip:'Regen',precipProb:'Regenwahrsch.',gust:'Böen',snow:'Schnee',wind:'Wind',models:'Modelle',members:'Member',range:'Modellspanne',weight:'Gewicht',model:'Modell',hourlyTemp:'Stündliche Temperatur (°C)',hourlyPrecip:'Stündlicher Niederschlag (mm)',consensusLine:'Konsens',risks:'Wetterrisiken',noRisks:'Kein nennenswertes Risiko',riskHeat:'Hitze (≥35 °C)',riskFrost:'Frost (≤0 °C)',riskRain:'Starkregen (≥30 mm)',riskGust:'Sturmböen (≥60 km/h)',riskSnow:'Schnee (≥2 cm)',riskStorm:'Gewitter',lvl1:'Vorwarnung',lvl2:'Warnung',lvl3:'Unwetterwarnung',myAlerts:'Meine Warnregeln',addRule:'Regel hinzufügen',variable:'Variable',condition:'Bedingung',threshold:'Schwelle',minProb:'Min. Wahrsch. %',ruleName:'Name (optional)',del:'Löschen',triggered:'Ausgelöste Regeln',noneTriggered:'Keine Regel ausgelöst',noRules:'Keine Regeln',enableNotif:'Benachrichtigungen aktivieren',notifOn:'Benachrichtigungen aktiv',modelHint:'Modelle an-/abschalten und Gewicht anpassen.',org:'Dienst',resolution:'Auflösung',reset:'Zurücksetzen',apply:'Aktualisieren',outlierNote:'Rot: Modelle weit vom Konsens entfernt.',ensSystems:'Ensemble-Systeme',methodTitle:'Funktionsweise',refs:'Wissenschaftliche Quellen',today:'Heute',prob:'Wahrsch.',
+g_clear:'Klar',g_partly:'Heiter',g_cloudy:'Bewölkt',g_fog:'Nebel',g_drizzle:'Niesel',g_rain:'Regen',g_showers:'Schauer',g_snow:'Schnee',g_thunder:'Gewitter'}
+};
+const t=k=>(I18N[S.lang]&&I18N[S.lang][k])??I18N.en[k]??k;
+
+/* ---------- configuration ---------- */
+const MODELS=[
+ {id:'ecmwf_ifs025',name:'ECMWF IFS',org:'ECMWF (EU)',res:'9–25 km',w:1.3},
+ {id:'ecmwf_aifs025',name:'ECMWF AIFS (AI)',org:'ECMWF (EU)',res:'25 km',w:1.2},
+ {id:'icon_seamless',name:'ICON',org:'DWD (DE)',res:'2–13 km',w:1.15,hires:true},
+ {id:'italia_meteo_arpae_icon_2i',name:'ICON-2I',org:'ItaliaMeteo / Arpae (IT)',res:'2.2 km',w:1.2,hires:true},
+ {id:'meteofrance_seamless',name:'ARPEGE / AROME',org:'Météo-France',res:'1.3–25 km',w:1.1,hires:true},
+ {id:'ukmo_seamless',name:'UKMO Unified',org:'Met Office (UK)',res:'2–10 km',w:1.15},
+ {id:'gfs_seamless',name:'GFS',org:'NOAA (US)',res:'13–25 km',w:1.0},
+ {id:'gem_seamless',name:'GEM',org:'ECCC (CA)',res:'15–25 km',w:0.9},
+ {id:'jma_seamless',name:'JMA GSM',org:'JMA (JP)',res:'~55 km',w:0.8},
+ {id:'cma_grapes_global',name:'GRAPES',org:'CMA (CN)',res:'~15 km',w:0.7},
+ {id:'bom_access_global',name:'ACCESS-G',org:'BOM (AU)',res:'~15 km',w:0.7}
+];
+const ENS=[{id:'ecmwf_ifs025',name:'ECMWF ENS'},{id:'gfs_seamless',name:'NCEP GEFS'},{id:'icon_seamless',name:'DWD ICON-EPS'}];
+const DAILY={code:'weather_code',tmax:'temperature_2m_max',tmin:'temperature_2m_min',precip:'precipitation_sum',snow:'snowfall_sum',wind:'wind_speed_10m_max',gust:'wind_gusts_10m_max'};
+const HOURLY=['temperature_2m','precipitation','wind_gusts_10m','cape'];
+const ENS_H=['temperature_2m','precipitation','wind_gusts_10m','snowfall'];
+const TOL={tmax:2,tmin:2,gust:10,wind:8,snow:2};
+const UNIT={tmax:'°',tmin:'°',precip:' mm',gust:' km/h',wind:' km/h',snow:' cm'};
+const COLORS=['#8a8a8a','#9a9a9a','#7a7a7a','#a6a6a6','#6e6e6e','#b2b2b2','#808080','#949494','#747474','#a0a0a0','#8e8e8e']; // individual models stay neutral grey so the orange consensus reads first
+
+/* ---------- state ---------- */
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const S={
+ lang:store.get('mc_lang',(navigator.language||'it').slice(0,2)),
+ loc:store.get('mc_loc',{name:'Milano',admin:'Lombardia',country:'IT',lat:45.4642,lon:9.19}),
+ days:store.get('mc_days',7),
+ mcfg:store.get('mc_models',{}),
+ rules:store.get('mc_rules',[]),
+ method:store.get('mc_method','auto'),calTruth:store.get('mc_truth','analysis'),calDays:store.get('mc_caldays',30),cal:null,calBusy:false,calError:null,raw:null,
+ data:null,sel:0,tab:'forecast',charts:[]
+};
+if(!I18N[S.lang])S.lang='en';
+const modelOn=m=>S.mcfg[m.id]?.on??true;
+const modelW=m=>S.mcfg[m.id]?.w??m.w;
+
+/* ---------- utils ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const qs=o=>Object.entries(o).map(([k,v])=>k+'='+v).join('&');
+const sum=a=>a.reduce((x,y)=>x+y,0);
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const fmt=(v,d=0)=>v==null||Number.isNaN(v)?'–':(+v).toLocaleString(S.lang,{minimumFractionDigits:d,maximumFractionDigits:d});
+async function getJSON(u){const r=await fetch(u);if(r.headers.get('X-MC-Offline'))S.offlineHit=true;let j=null;try{j=await r.json()}catch(e){}if(!r.ok||!j||j.error)throw new Error((j&&j.reason)||('HTTP '+r.status));return j}
+function groupByDay(times){const m=new Map();times.forEach((x,i)=>{const d=x.slice(0,10);if(!m.has(d))m.set(d,[]);m.get(d).push(i)});return m}
+const vals=(arr,idx)=>idx.map(i=>arr?.[i]).filter(v=>v!=null&&!Number.isNaN(v));
+function membersOf(h,v){const re=new RegExp('^'+v+'(_member\\d+)?$');return Object.keys(h).filter(k=>re.test(k)).map(k=>h[k])}
+function quant(sorted,q){if(!sorted.length)return null;const p=(sorted.length-1)*q,lo=Math.floor(p),hi=Math.ceil(p);return sorted[lo]+(sorted[hi]-sorted[lo])*(p-lo)}
+function wstats(items){if(!items.length)return null;const W=sum(items.map(x=>x.w));const mean=sum(items.map(x=>x.w*x.v))/W;const sd=Math.sqrt(sum(items.map(x=>x.w*(x.v-mean)**2))/W);const vs=items.map(x=>x.v).sort((a,b)=>a-b);return{mean,sd,min:vs[0],max:vs[vs.length-1],median:quant(vs,.5),n:items.length}}
+function estats(systems){const all=systems.flat().sort((a,b)=>a-b);if(!all.length)return null;return{p10:quant(all,.1),p50:quant(all,.5),p90:quant(all,.9),n:all.length}}
+const cmp=(op,v,thr)=>op==='>='?v>=thr:v<=thr;
+function detFrac(items,f){if(!items.length)return null;const W=sum(items.map(x=>x.w));return sum(items.filter(x=>f(x.v)).map(x=>x.w))/W}
+function ensFrac(systems,f){const s=systems.filter(a=>a.length);if(!s.length)return null;return sum(s.map(a=>a.filter(f).length/a.length))/s.length}
+function combine(e,d){if(e==null)return d;if(d==null)return e;return .6*e+.4*d}
+function agreement(k,s){if(!s||s.n<2)return null;const tol=k==='precip'?1.5+.4*Math.abs(s.mean):TOL[k];return clamp(1-s.sd/(2*tol))}
+function ensAgreement(k,e,mean){if(!e||e.n<5)return null;const tol=k==='precip'?1.5+.4*Math.abs(mean||0):TOL[k];return clamp(1-(e.p90-e.p10)/(4*tol))}
+const level=x=>x>=.75?'high':x>=.5?'medium':'low';
+function codeGroup(c){if(c==null)return null;if(c===0)return'clear';if(c<=2)return'partly';if(c===3)return'cloudy';if(c===45||c===48)return'fog';if(c>=51&&c<=57)return'drizzle';if((c>=61&&c<=67))return'rain';if(c>=80&&c<=82)return'showers';if((c>=71&&c<=77)||c===85||c===86)return'snow';if(c>=95)return'thunder';return'cloudy'}
+const ICON={clear:'☀️',partly:'🌤️',cloudy:'☁️',fog:'🌫️',drizzle:'🌦️',rain:'🌧️',showers:'🌦️',snow:'❄️',thunder:'⛈️'};
+
+
+/* ---------- calibration: verification of past forecasts ---------- */
+const CAL_VARS={tmax:['temperature_2m','max'],tmin:['temperature_2m','min'],precip:['precipitation','sum'],gust:['wind_gusts_10m','max']};
+const CAL_H=['temperature_2m','precipitation','wind_gusts_10m'];
+const LEADS=[1,2,3,4,5];
+const leadFor=i=>Math.min(Math.max(i,1),5);
+const mean=a=>a.length?sum(a)/a.length:null;
+function calKey(){return`mc_cal:${S.loc.lat.toFixed(2)},${S.loc.lon.toFixed(2)}:${S.calTruth}:${S.calDays}:${MODELS.filter(modelOn).map(m=>m.id).join('|')}`}
+function pickCol(h,base,mid,single){if(single)return h[base];return h[base+'_'+mid]}
+function aggDay(arr,idx,how){if(!arr||!idx)return null;const v=vals(arr,idx);if(v.length<20)return null;return how==='max'?Math.max(...v):how==='min'?Math.min(...v):sum(v)}
+function npdf(x,m,sd){const z=(x-m)/sd;return Math.exp(-.5*z*z)/(sd*2.5066282746)}
+function ncdf(z){const t=1/(1+.3275911*Math.abs(z)/Math.SQRT2),y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-z*z/2);return .5*(1+(z<0?-y:y))}
+function solve(A,b){const n=b.length,M=A.map((r,i)=>[...r,b[i]]);for(let c=0;c<n;c++){let p=c;for(let r=c+1;r<n;r++)if(Math.abs(M[r][c])>Math.abs(M[p][c]))p=r;[M[c],M[p]]=[M[p],M[c]];if(Math.abs(M[c][c])<1e-12)return null;for(let r=0;r<n;r++){if(r===c)continue;const f=M[r][c]/M[c][c];for(let k=c;k<=n;k++)M[r][k]-=f*M[c][k]}}return M.map((r,i)=>r[n]/r[i])}
+// ridge regression: (X'X + lambda I) a = X'y
+function ridge(X,Y){const p=X[0].length,A=[...Array(p)].map((_,i)=>[...Array(p)].map((_,j)=>sum(X.map(r=>r[i]*r[j])))),b=[...Array(p)].map((_,i)=>sum(X.map((r,t)=>r[i]*Y[t])));const lam=.3*sum(A.map((r,i)=>r[i]))/p+1e-6;A.forEach((r,i)=>r[i]+=lam);return solve(A,b)}
+// fit all methods for one variable and one lead time; sm = [{y, f:{modelId:value}}]
+function fitAll(k,sm){
+ const bc=k!=='precip',st={};
+ const ids=[...new Set(sm.flatMap(s=>Object.keys(s.f)))];
+ ids.forEach(id=>{const e=sm.filter(s=>s.f[id]!=null).map(s=>s.f[id]-s.y);if(e.length<Math.max(5,sm.length*.6))return;
+  const bias=mean(e),mse=mean(e.map(x=>x*x));st[id]={n:e.length,bias,mae:mean(e.map(Math.abs)),mse:Math.max(mse,1e-3),msebc:Math.max(mean(e.map(x=>(x-bias)**2)),1e-3)}});
+ const use=Object.keys(st);if(!use.length)return null;
+ const inv={},W=sum(use.map(id=>1/(bc?st[id].msebc:st[id].mse)));use.forEach(id=>inv[id]=(1/(bc?st[id].msebc:st[id].mse))/W);
+ const rows=sm.filter(s=>use.every(id=>s.f[id]!=null));
+ let sup=null;
+ if(rows.length>=6){const ybar=mean(rows.map(r=>r.y)),fbar={};use.forEach(id=>fbar[id]=mean(rows.map(r=>r.f[id])));
+  const a=ridge(rows.map(r=>use.map(id=>r.f[id]-fbar[id])),rows.map(r=>r.y-ybar));
+  if(a)sup={ybar,fbar,a:Object.fromEntries(use.map((id,j)=>[id,a[j]]))}}
+ let bma=null;
+ if(bc&&rows.length>=8){
+  const F=rows.map(r=>use.map(id=>r.f[id]-st[id].bias)),Y=rows.map(r=>r.y);
+  // Dirichlet prior (alpha pseudo-days per model) keeps EM from collapsing on 1-2 models with short training periods
+  const alpha=Math.max(1,rows.length/use.length);
+  let w=use.map(()=>1/use.length),s2=Math.max(mean(F.flatMap((fr,t)=>fr.map(x=>(x-Y[t])**2))),.05);
+  for(let it=0;it<300;it++){
+   const sd=Math.sqrt(s2),z=F.map((fr,t)=>{const q=fr.map((x,j)=>w[j]*npdf(Y[t],x,sd)),Q=sum(q);return Q>0?q.map(x=>x/Q):fr.map(()=>1/fr.length)});
+   const nw=use.map((_,j)=>(sum(z.map(zz=>zz[j]))+alpha)/(z.length+use.length*alpha)),ns2=mean(F.map((fr,t)=>sum(fr.map((x,j)=>z[t][j]*(Y[t]-x)**2))));
+   const d=Math.max(...nw.map((x,j)=>Math.abs(x-w[j])));w=nw;s2=Math.max(ns2,.05);if(d<1e-5)break}
+  bma={w:Object.fromEntries(use.map((id,j)=>[id,w[j]])),sigma:Math.sqrt(s2)}}
+ return{st,inv,sup,bma,bc,n:sm.length};
+}
+// combine today's model values f with fitted parameters p
+function predict(p,f,method){
+ if(!p)return null;const ids=Object.keys(p.st).filter(id=>f[id]!=null);if(!ids.length)return null;
+ const adj=id=>p.bc?f[id]-p.st[id].bias:f[id];
+ const viaW=w=>{const W=sum(ids.map(id=>w[id]||0));if(W<=0)return null;const ww=Object.fromEntries(ids.map(id=>[id,(w[id]||0)/W]));return{mean:sum(ids.map(id=>ww[id]*adj(id))),w:ww,used:'inv'}};
+ if(method==='sup'&&p.sup&&Object.keys(p.sup.a).every(id=>f[id]!=null)){let m=p.sup.ybar;for(const id in p.sup.a)m+=p.sup.a[id]*(f[id]-p.sup.fbar[id]);return{mean:m,w:p.sup.a,used:'sup'}}
+ if(method==='bma'&&p.bma){const r=viaW(p.bma.w);if(r){r.comps=ids.map(id=>({w:r.w[id],mu:adj(id)}));r.sigma=p.bma.sigma;r.psd=Math.sqrt(sum(r.comps.map(c=>c.w*(c.mu-r.mean)**2))+p.bma.sigma**2);r.used='bma';return r}}
+ return viaW(p.inv);
+}
+function evaluate(k,p,te){
+ if(!p)return null;
+ const best=Object.keys(p.st).sort((a,c)=>p.st[a].mae-p.st[c].mae)[0];
+ const M={mean:f=>mean(Object.values(f)),best:f=>f[best]??null,inv:f=>predict(p,f,'inv')?.mean,
+  sup:f=>{const r=p.sup&&predict(p,f,'sup');return r&&r.used==='sup'?r.mean:null},bma:f=>{const r=p.bma&&predict(p,f,'bma');return r&&r.used==='bma'?r.mean:null}};
+ const out={};for(const m in M){const e=te.map(s=>{let v=M[m](s.f);if(v==null)return null;if(k!=='tmax'&&k!=='tmin')v=Math.max(0,v);return Math.abs(v-s.y)}).filter(x=>x!=null);out[m]=e.length>=3?mean(e):null}
+ return out;
+}
+async function calibrate(force){
+ const on=MODELS.filter(modelOn);if(!on.length)return false;
+ const key=calKey(),cached=store.get(key,null);
+ if(!force&&cached&&Date.now()-cached.ts<20*3600e3){S.cal=cached;return true}
+ S.calBusy=true;S.calError=null;if(S.tab==='models')render();
+ try{
+  const hv=[];CAL_H.forEach(v=>{hv.push(v);LEADS.forEach(L=>hv.push(`${v}_previous_day${L}`))});
+  const prev=await getJSON('https://previous-runs-api.open-meteo.com/v1/forecast?'+qs({latitude:S.loc.lat,longitude:S.loc.lon,timezone:'auto',past_days:S.calDays,forecast_days:1,wind_speed_unit:'kmh',hourly:hv.join(','),models:on.map(m=>m.id).join(',')}));
+  const h=prev.hourly,single=on.length===1,g=groupByDay(h.time),today=h.time[h.time.length-1].slice(0,10);
+  const dates=[...g.keys()].filter(d=>d<today),truth={};
+  if(S.calTruth==='era5'){
+   const a=await getJSON('https://archive-api.open-meteo.com/v1/archive?'+qs({latitude:S.loc.lat,longitude:S.loc.lon,timezone:'auto',start_date:dates[0],end_date:dates[dates.length-1],hourly:CAL_H.join(','),models:'era5_seamless',wind_speed_unit:'kmh'}));
+   const ga=groupByDay(a.hourly.time);
+   dates.forEach(d=>{truth[d]={};for(const k in CAL_VARS){const[v,how]=CAL_VARS[k];truth[d][k]=aggDay(a.hourly[v],ga.get(d),how)}});
+  }else{
+   // best available picture of what happened: hour-by-hour mean of every model's latest run
+   const mm={};CAL_H.forEach(v=>{mm[v]=h.time.map((_,i)=>{const xs=on.map(m=>pickCol(h,v,m.id,single)?.[i]).filter(x=>x!=null);return xs.length>=Math.min(3,on.length)?mean(xs):null})});
+   dates.forEach(d=>{truth[d]={};for(const k in CAL_VARS){const[v,how]=CAL_VARS[k];truth[d][k]=aggDay(mm[v],g.get(d),how)}});
+  }
+  const cal={ts:Date.now(),truth:S.calTruth,days:S.calDays,params:{},evalr:{},nDates:0};let used=new Set();
+  for(const k in CAL_VARS){const[v,how]=CAL_VARS[k];cal.params[k]={};cal.evalr[k]={};
+   for(const L of LEADS){
+    const sm=dates.map(d=>{const y=truth[d]?.[k];if(y==null)return null;const f={};on.forEach(m=>{const x=aggDay(pickCol(h,`${v}_previous_day${L}`,m.id,single),g.get(d),how);if(x!=null)f[m.id]=x});return Object.keys(f).length?{d,y,f}:null}).filter(Boolean);
+    sm.forEach(s=>used.add(s.d));if(sm.length<8)continue;
+    cal.params[k][L]=fitAll(k,sm);
+    const cut=Math.floor(sm.length*2/3);if(cut>=6&&sm.length-cut>=3)cal.evalr[k][L]=evaluate(k,fitAll(k,sm.slice(0,cut)),sm.slice(cut));
+   }}
+  cal.nDates=used.size;
+  if(!Object.values(cal.params).some(o=>Object.keys(o).length))throw new Error('no past forecasts available');
+  cal.summary={};for(const k in cal.evalr){const Ls=Object.values(cal.evalr[k]).filter(Boolean);if(!Ls.length)continue;cal.summary[k]={};['mean','best','inv','sup','bma'].forEach(m=>{const x=Ls.map(o=>o[m]).filter(v=>v!=null);cal.summary[k][m]=x.length?mean(x):null})}
+  S.cal=cal;store.set(key,cal);return true;
+ }catch(e){S.calError=e.message;return false}finally{S.calBusy=false}
+}
+function methodFor(k){if(S.method!=='auto')return S.method;const r=S.cal?.summary?.[k];if(!r)return'inv';return['inv','sup','bma'].filter(m=>r[m]!=null).sort((a,b)=>r[a]-r[b])[0]||'inv'}
+function rebuild(){if(!S.raw)return;S.data=build(S.raw.det,S.raw.on,S.raw.ens);render()}
+
+/* ---------- data loading ---------- */
+async function load(){
+ const on=MODELS.filter(modelOn);
+ if(!on.length){$('#view').innerHTML=`<div class="card err">${t('noModels')}</div>`;return}
+ $('#status').innerHTML=`<span class="spin">⟳</span> ${t('loading')}`;S.offlineHit=false;
+ const base={latitude:S.loc.lat,longitude:S.loc.lon,timezone:'auto',forecast_days:S.days};
+ const detUrl='https://api.open-meteo.com/v1/forecast?'+qs({...base,daily:Object.values(DAILY).join(','),hourly:HOURLY.join(','),models:on.map(m=>m.id).join(','),wind_speed_unit:'kmh'});
+ const ensUrls=ENS.map(e=>'https://ensemble-api.open-meteo.com/v1/ensemble?'+qs({...base,hourly:ENS_H.join(','),models:e.id,wind_speed_unit:'kmh'}));
+ try{
+  const res=await Promise.allSettled([getJSON(detUrl),...ensUrls.map(getJSON)]);
+  if(res[0].status!=='fulfilled')throw res[0].reason;
+  const ens=res.slice(1).map((r,i)=>r.status==='fulfilled'?{sys:ENS[i],json:r.value}:null).filter(Boolean);
+  S.cal=store.get(calKey(),null);S.raw={det:res[0].value,on,ens};
+  S.data=build(res[0].value,on,ens);
+  S.sel=Math.min(S.sel,S.data.days.length-1);
+  S.offline=S.offlineHit;S.updated=new Date();
+  $('#status').textContent=`${on.length} ${t('models')} · ${S.data.ensCount} ${t('members')} · ${t('updated')} ${S.updated.toLocaleTimeString(S.lang,{hour:'2-digit',minute:'2-digit'})}`;
+  render();notifyIfNeeded();
+  if(S.method!=='prior'&&(!S.cal||Date.now()-S.cal.ts>20*3600e3))calibrate(false).then(ok=>{if(ok)rebuild();else if(S.tab==='models')render()});
+ }catch(e){$('#status').textContent='';$('#view').innerHTML=`<div class="card err">${t('error')}: ${esc(e.message)}</div>`}
+}
+
+function build(det,on,ens){
+ const single=on.length===1;
+ const pickD=(v,m)=>single?det.daily[v]:det.daily[`${v}_${m.id}`];
+ const pickH=(v,m)=>single?det.hourly[v]:det.hourly[`${v}_${m.id}`];
+ const hIdx=groupByDay(det.hourly.time);
+ // ensemble: per system, per day, per member aggregates + hourly pooled by timestamp
+ const ensTimeT=new Map(),ensTimeP=new Map();let ensCount=0;
+ const ensDays=ens.map(({sys,json})=>{
+  const h=json.hourly,g=groupByDay(h.time),mem={};
+  ENS_H.forEach(v=>mem[v]=membersOf(h,v));
+  ensCount+=mem.temperature_2m.length;
+  h.time.forEach((tm,i)=>{
+   const a=mem.temperature_2m.map(x=>x[i]).filter(v=>v!=null);const p=mem.precipitation.map(x=>x[i]).filter(v=>v!=null);
+   if(a.length){if(!ensTimeT.has(tm))ensTimeT.set(tm,[]);ensTimeT.get(tm).push(...a)}
+   if(p.length){if(!ensTimeP.has(tm))ensTimeP.set(tm,[]);ensTimeP.get(tm).push(...p)}
+  });
+  const out={};
+  for(const [d,idx] of g){
+   const o={tmax:[],tmin:[],precip:[],gust:[],snow:[]};
+   mem.temperature_2m.forEach(a=>{const T=vals(a,idx);if(T.length>=20){o.tmax.push(Math.max(...T));o.tmin.push(Math.min(...T))}});
+   mem.precipitation.forEach(a=>{const P=vals(a,idx);if(P.length>=20)o.precip.push(sum(P))});
+   mem.wind_gusts_10m.forEach(a=>{const G=vals(a,idx);if(G.length>=20)o.gust.push(Math.max(...G))});
+   mem.snowfall.forEach(a=>{const X=vals(a,idx);if(X.length>=20)o.snow.push(sum(X))});
+   out[d]=o;
+  }
+  return{sys,days:out};
+ });
+ const days=det.daily.time.map((date,i)=>{
+  const wf=m=>modelW(m)*(m.hires&&i<=2?1.25:1);
+  const D={};
+  for(const k in DAILY)D[k]=on.map(m=>({m,v:(pickD(DAILY[k],m)||[])[i],w:wf(m)})).filter(x=>x.v!=null&&!Number.isNaN(x.v));
+  const idx=hIdx.get(date)||[];
+  D.cape=on.map(m=>{const v=vals(pickH('cape',m),idx);return v.length?{m,v:Math.max(...v),w:wf(m)}:null}).filter(Boolean);
+  const E={};['tmax','tmin','precip','gust','snow'].forEach(k=>E[k]=ensDays.map(e=>e.days[date]?.[k]||[]).filter(a=>a.length));
+  const C={},ES={},AG={};
+  ['tmax','tmin','precip','gust','snow','wind'].forEach(k=>{C[k]=wstats(D[k]);ES[k]=E[k]?estats(E[k]):null;AG[k]=agreement(k,C[k])});
+  const L=leadFor(i);let calW=null,hw=null;
+  if(S.cal&&S.method!=='prior'){
+   ['tmax','tmin','precip','gust'].forEach(k=>{const p=S.cal.params[k]?.[L];if(!p||!C[k])return;const f={};D[k].forEach(x=>f[x.m.id]=x.v);const r=predict(p,f,methodFor(k));if(!r)return;
+    C[k]={...C[k],raw:C[k].mean,mean:k==='tmax'||k==='tmin'?r.mean:Math.max(0,r.mean),cal:r.used,psd:r.psd,comps:r.comps,sigma:r.sigma};if(k==='tmax')calW=r.w});
+   const pt=S.cal.params.tmax?.[L],pn=S.cal.params.tmin?.[L];
+   if(pt){const w=methodFor('tmax')==='bma'&&pt.bma?pt.bma.w:pt.inv;hw={};for(const id in pt.st)hw[id]={w:w[id]||0,b:(pt.st[id].bias+(pn?.st[id]?.bias??pt.st[id].bias))/2}}
+  }
+  const ag=['tmax','tmin','precip','gust'].map(k=>AG[k]).filter(x=>x!=null);
+  const modelAgr=ag.length?sum(ag)/ag.length:null;
+  const ea=['tmax','tmin','precip','gust'].map(k=>ensAgreement(k,ES[k],C[k]?.mean)).filter(x=>x!=null);
+  const ensAgr=ea.length?sum(ea)/ea.length:null;
+  const conf=modelAgr==null?ensAgr:ensAgr==null?modelAgr:.6*modelAgr+.4*ensAgr;
+  // weather code vote
+  const votes={};D.code.forEach(x=>{const g=codeGroup(x.v);votes[g]=(votes[g]||0)+x.w});
+  const group=Object.keys(votes).sort((a,b)=>votes[b]-votes[a])[0]||null;
+  const detP=(k,op,thr)=>{const c=C[k];if(c?.comps){const up=sum(c.comps.map(q=>q.w*(1-ncdf((thr-q.mu)/c.sigma))));return op==='>='?up:1-up}return detFrac(D[k]||[],v=>cmp(op,v,thr))};
+  const prob=(k,op,thr)=>combine(ensFrac(E[k]||[],v=>cmp(op,v,thr)),detP(k,op,thr));
+  const pRain=prob('precip','>=',1);
+  const stormCode=detFrac(D.code,v=>v>=95),stormCape=detFrac(D.cape,v=>v>=1500);
+  const risks=[
+   ['riskHeat',prob('tmax','>=',35)],['riskFrost',prob('tmin','<=',0)],['riskRain',prob('precip','>=',30)],
+   ['riskGust',prob('gust','>=',60)],['riskSnow',prob('snow','>=',2)],
+   ['riskStorm',Math.max(stormCode??0,(stormCape??0)*.7)]
+  ].map(([k,p])=>({k,p:p??0,lvl:p>=.7?3:p>=.4?2:p>=.2?1:0})).filter(r=>r.lvl>0);
+  return{date,i,L,D,E,C,ES,AG,modelAgr,ensAgr,conf,group,pRain,prob,risks,idx,calW,hw};
+ });
+ return{days,on,pickH,hourly:det.hourly,ensTimeT,ensTimeP,ensCount,ensSystems:ens.map(e=>e.sys.name)};
+}
+
+/* ---------- rendering ---------- */
+function dayLabel(d,i){if(i===0)return t('today');return new Date(d+'T12:00').toLocaleDateString(S.lang,{weekday:'short',day:'numeric',month:'short'})}
+function render(){
+ document.documentElement.lang=S.lang;
+ $('#title').textContent='Eudia';$('#tagline').textContent=t('tagline');
+ $('#q').placeholder=t('searchPh');$('#btnSearch').textContent=t('search');
+ $('#days').innerHTML=[3,5,7,10,14,16].map(n=>`<option value="${n}" ${n==S.days?'selected':''}>${n} ${t('days')}</option>`).join('');
+ $('#locName').textContent=[S.loc.name,S.loc.admin,S.loc.country].filter(Boolean).join(', ');
+ $('#attrib').textContent=t('attribution');
+ const SV=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+ const TI={forecast:SV('<circle cx="8" cy="8" r="3"/><path d="M8 2v1.5M2 8h1.5M3.8 3.8l1 1M12.2 3.8l-1 1"/><path d="M7 20h10a4 4 0 0 0 0-8 5 5 0 0 0-9.6 1.5A3.3 3.3 0 0 0 7 20z"/>'),
+  models:SV('<path d="M3 6c6 0 7 6 18 6M3 12h18M3 18c6 0 7-6 18-6"/>'),
+  alerts:SV('<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>'),
+  method:SV('<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M9 8h6"/>')};
+ $('#tabs').innerHTML=['forecast','models','alerts','method'].map(k=>`<button data-tab="${k}" class="${S.tab===k?'on':''}"><span class="ti">${TI[k]}</span>${t('tab'+k[0].toUpperCase()+k.slice(1))}</button>`).join('');
+ $('#banner').innerHTML=S.offline?`<div class="banner">📴 ${t('offline')}</div>`:'';
+ S.charts.forEach(c=>c.destroy());S.charts=[];
+ if(S.tab==='forecast')renderForecast();else if(S.tab==='models')renderModels();else if(S.tab==='alerts')renderAlerts();else renderMethod();
+}
+function renderForecast(){
+ if(!S.data){$('#view').innerHTML='';return}
+ const days=S.data.days,d=days[S.sel],trig=evalRules();
+ const cards=days.map((x,i)=>{const L=level(x.conf??0),maxR=Math.max(0,...x.risks.map(r=>r.lvl)),rt=trig.some(r=>r.date===x.date);
+  return`<div class="day ${i===S.sel?'on':''}" data-day="${i}"><div class="d">${esc(dayLabel(x.date,i))}</div><div class="ic">${ICON[x.group]||'❔'}</div>
+  <div><span class="t">${fmt(x.C.tmax?.mean)}°</span> <span class="tmin">${fmt(x.C.tmin?.mean)}°</span></div>
+  <div class="small">💧 ${fmt(x.C.precip?.mean,1)} mm · ${x.pRain==null?'–':Math.round(x.pRain*100)+'%'}</div>
+  <div style="margin-top:4px"><span class="badge b-${L}">${t(L)}</span>${maxR?`<span class="dot l${maxR}"></span>`:''}${rt?' 🔔':''}</div></div>`}).join('');
+ const kpi=(k,dec=0)=>{const c=d.C[k],e=d.ES[k],a=d.AG[k];return`<div class="kpi"><div class="lbl">${t(k)}${c?.cal?' <span class="badge b-high">✓</span>':''}</div><div class="v">${c?fmt(c.mean,dec)+UNIT[k]:'–'}${c?.psd?`<span class="s"> ±${fmt(c.psd,1)}</span>`:''}</div>
+  ${c?.cal?`<div class="s">${t('raw')}: ${fmt(c.raw,dec)}${UNIT[k]}</div>`:''}
+  <div class="s">${t('range')}: ${c?fmt(c.min,dec)+' – '+fmt(c.max,dec):'–'}</div>
+  <div class="s">${t('ens1090')}: ${e?fmt(e.p10,dec)+' – '+fmt(e.p90,dec):'–'}</div>
+  ${a!=null?`<div class="bar" title="${t('agreement')}"><i style="width:${Math.round(a*100)}%"></i></div>`:''}</div>`};
+ const L=level(d.conf??0);
+ const risks=d.risks.length?d.risks.map(r=>`<div class="risk"><span>${t(r.k)}</span><span class="lv${r.lvl}">${t('lvl'+r.lvl)} · ${Math.round(r.p*100)}%</span></div>`).join(''):`<div class="small">${t('noRisks')}</div>`;
+ const rows=S.data.on.map(m=>{const g=k=>d.D[k].find(x=>x.m===m),cell=(k,dec)=>{const x=g(k),c=d.C[k];if(!x)return'<td>–</td>';const tol=k==='precip'?1.5+.4*Math.abs(c.mean):TOL[k];return`<td class="${Math.abs(x.v-c.mean)>2*tol?'out':''}">${fmt(x.v,dec)}</td>`};
+  const cd=g('code');return`<tr><td>${esc(m.name)}</td><td>${cd?ICON[codeGroup(cd.v)]:'–'}</td>${cell('tmax',0)}${cell('tmin',0)}${cell('precip',1)}${cell('gust',0)}${cell('snow',1)}<td>${d.calW?fmt(d.calW[m.id]??0,2):fmt(modelW(m),2)}</td></tr>`}).join('');
+ $('#view').innerHTML=`<div class="days">${cards}</div>
+ <div class="card" style="margin-top:10px"><div class="daytitle"><h2>${esc(dayLabel(d.date,d.i))} · ${ICON[d.group]||''} ${d.group?t('g_'+d.group):''}</h2>
+  <div><span class="small">${t('confidence')}</span> <span class="badge b-${L}">${t(L)} ${d.conf!=null?Math.round(d.conf*100)+'%':''}</span></div></div>
+  ${S.cal&&S.method!=='prior'?`<p class="small" style="margin:0 0 8px">✓ ${t('calibrated')}: ${t('m_'+S.method)} · ${S.cal.nDates} ${t('calDaysUsed')} · ${t('lead')} ${d.L} g</p>`:''}
+  <div class="grid">${kpi('tmax')}${kpi('tmin')}${kpi('precip',1)}<div class="kpi"><div class="lbl">${t('precipProb')}</div><div class="v">${d.pRain==null?'–':Math.round(d.pRain*100)+'%'}</div></div>${kpi('gust')}${kpi('snow',1)}</div>
+  <p class="small">${t('agreement')}: ${d.modelAgr!=null?Math.round(d.modelAgr*100)+'%':'–'} · ${t('ensSystems')}: ${esc(S.data.ensSystems.join(', ')||t('ensNone'))}</p></div>
+ <div class="card"><h2>${t('risks')}</h2>${risks}</div>
+ <div class="card"><h2>${t('hourlyTemp')}</h2><div class="chartbox"><canvas id="cT"></canvas></div></div>
+ <div class="card"><h2>${t('hourlyPrecip')}</h2><div class="chartbox"><canvas id="cP"></canvas></div></div>
+ <div class="card"><h2>${t('model')}</h2><div class="scroll"><table class="tbl"><tr><th>${t('model')}</th><th></th><th>${t('tmax')}</th><th>${t('tmin')}</th><th>${t('precip')}</th><th>${t('gust')}</th><th>${t('snow')}</th><th>${d.calW?t('calW'):t('weight')}</th></tr>${rows}</table></div><p class="small">${t('outlierNote')}</p></div>`;
+ drawCharts(d);
+}
+function drawCharts(d){
+ if(typeof Chart==='undefined')return;
+ const {hourly,on,pickH,ensTimeT,ensTimeP}=S.data,idx=d.idx,labels=idx.map(i=>hourly.time[i].slice(11,16));
+ const css=getComputedStyle(document.documentElement),ink=css.getPropertyValue('--mute').trim(),grid=css.getPropertyValue('--line').trim();
+ const wmean=v=>idx.map(i=>{let W=0,s=0;on.forEach(m=>{let x=pickH(v,m)?.[i];if(x==null)return;let w=modelW(m);if(d.hw&&v==='temperature_2m'){const c=d.hw[m.id];if(!c)return;w=c.w;x-=c.b}W+=w;s+=w*x});return W?s/W:null});
+ const ds=on.map((m,j)=>({label:m.name,data:idx.map(i=>pickH('temperature_2m',m)?.[i]??null),borderColor:COLORS[j%COLORS.length],borderWidth:1,pointRadius:0,tension:.3}));
+ const q=(map,qq)=>idx.map(i=>{const a=map.get(hourly.time[i]);return a&&a.length?quant([...a].sort((x,y)=>x-y),qq):null});
+ const p10=q(ensTimeT,.1),p90=q(ensTimeT,.9);
+ const opts={responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:ink,boxWidth:10,font:{size:10}}}},scales:{x:{ticks:{color:ink,maxTicksLimit:8},grid:{color:grid}},y:{ticks:{color:ink},grid:{color:grid}}}};
+ S.charts.push(new Chart($('#cT'),{type:'line',data:{labels,datasets:[
+  {label:t('ensBand')+' 10%',data:p10,borderWidth:0,pointRadius:0,backgroundColor:'rgba(128,128,128,.18)'},
+  {label:t('ensBand')+' 90%',data:p90,borderWidth:0,pointRadius:0,fill:'-1',backgroundColor:'rgba(128,128,128,.18)'},
+  ...ds,{label:t('consensusLine'),data:wmean('temperature_2m'),borderColor:css.getPropertyValue('--acc').trim(),borderWidth:3.5,pointRadius:0,tension:.3}]},options:opts}));
+ const pp=idx.map(i=>{const a=ensTimeP.get(hourly.time[i]);return a&&a.length?100*a.filter(v=>v>=.1).length/a.length:null});
+ S.charts.push(new Chart($('#cP'),{type:'bar',data:{labels,datasets:[
+  {type:'bar',label:t('consensusLine')+' (mm)',data:wmean('precipitation'),backgroundColor:css.getPropertyValue('--rain').trim(),yAxisID:'y'},
+  {type:'line',label:t('probHour'),data:pp,borderColor:css.getPropertyValue('--acc').trim(),pointRadius:0,tension:.3,yAxisID:'y1'}]},
+  options:{...opts,scales:{x:opts.scales.x,y:{...opts.scales.y,beginAtZero:true},y1:{position:'right',min:0,max:100,ticks:{color:ink},grid:{display:false}}}}}));
+}
+function calCard(){
+ const opt=(id,cur,list)=>`<select id="${id}">${list.map(([v,l])=>`<option value="${v}" ${String(v)===String(cur)?'selected':''}>${l}</option>`).join('')}</select>`;
+ let status=S.calBusy?`<span class="spin">⟳</span> ${t('calBusy')}`:S.calError?`<span class="err">${t('calErr')}: ${esc(S.calError)}</span>`:S.cal?`${t('calDone')} ${new Date(S.cal.ts).toLocaleString(S.lang,{dateStyle:'short',timeStyle:'short'})} · ${S.cal.nDates} ${t('calDaysUsed')}`:t('calNone');
+ let oos='',pm='';
+ if(S.cal&&S.cal.summary){
+  const ms=['mean','best','inv','sup','bma'];
+  const r=['tmax','tmin','precip','gust'].filter(k=>S.cal.summary[k]).map(k=>{const row=S.cal.summary[k],vs=ms.map(m=>row[m]).filter(v=>v!=null),mn=Math.min(...vs);
+   return`<tr><td>${t(k)}</td>${ms.map(m=>`<td>${row[m]==null?'–':`<span style="${row[m]===mn?'font-weight:700;color:var(--ok)':''}">${fmt(row[m],k==='precip'?1:1)}</span>`}</td>`).join('')}</tr>`}).join('');
+  oos=`<h3>${t('oos')}</h3><div class="scroll"><table class="tbl"><tr><th>${t('variableCol')}</th>${ms.map(m=>`<th>${t('e_'+m)}</th>`).join('')}</tr>${r}</table></div><p class="small">${t('oosHint')}</p>`;
+  const p1=S.cal.params.tmax?.[1],p3=S.cal.params.tmax?.[3];
+  if(p1){const mt=methodFor('tmax'),wkey=mt==='bma'&&p1.bma?p1.bma.w:mt==='sup'&&p1.sup?p1.sup.a:p1.inv;
+   const rows=MODELS.filter(m=>p1.st[m.id]).sort((a,b)=>p1.st[a.id].mae-p1.st[b.id].mae).map(m=>`<tr><td>${esc(m.name)}</td><td>${fmt(p1.st[m.id].mae,1)}°</td><td>${p3?.st[m.id]?fmt(p3.st[m.id].mae,1)+'°':'–'}</td><td>${(p1.st[m.id].bias>0?'+':'')+fmt(p1.st[m.id].bias,1)}°</td><td>${S.method==='prior'?fmt(modelW(m),2):fmt(wkey[m.id]??0,2)}</td></tr>`).join('');
+   pm=`<h3>${t('perModel')}</h3><div class="scroll"><table class="tbl"><tr><th>${t('model')}</th><th>${t('mae1')}</th><th>${t('mae3')}</th><th>${t('bias1')}</th><th>${S.method==='prior'?t('weight'):t('calW')}</th></tr>${rows}</table></div>`}
+ }
+ return`<div class="card"><h2>${t('calTitle')}</h2><p class="small">${t('calHint')}</p>
+ <div class="row">
+  <label class="f">${t('method')}${opt('calMethod',S.method,[['auto',t('m_auto')],['bma',t('m_bma')],['sup',t('m_sup')],['inv',t('m_inv')],['prior',t('m_prior')]])}</label>
+  <label class="f">${t('truth')}${opt('calTruth',S.calTruth,[['analysis',t('t_analysis')],['era5',t('t_era5')]])}</label>
+  <label class="f">${t('period')}${opt('calDays',S.calDays,[[14,'14 '+t('days')],[30,'30 '+t('days')],[60,'60 '+t('days')]])}</label>
+  <button class="pri" id="calRun" style="align-self:flex-end" ${S.calBusy?'disabled':''}>${t('calRun')}</button></div>
+ <p class="small">${status}</p>${oos}${pm}</div>`}
+function renderModels(){
+ const rows=MODELS.map(m=>`<tr><td><label><input type="checkbox" data-mon="${m.id}" ${modelOn(m)?'checked':''}> ${esc(m.name)}</label></td><td>${esc(m.org)}</td><td>${esc(m.res)}</td>
+  <td><input type="number" step="0.05" min="0" max="3" value="${modelW(m)}" data-mw="${m.id}" style="width:70px"></td></tr>`).join('');
+ $('#view').innerHTML=calCard()+`<div class="card"><p class="small">${t('modelHint')}</p><div class="scroll"><table class="tbl"><tr><th>${t('model')}</th><th>${t('org')}</th><th>${t('resolution')}</th><th>${t('weight')}</th></tr>${rows}</table></div>
+ <h3>${t('ensSystems')}</h3><p class="small">${ENS.map(e=>e.name).join(' · ')}</p>
+ <div class="row"><button class="pri" id="applyModels">${t('apply')}</button><button id="resetModels">${t('reset')}</button></div></div>`;
+}
+const RVARS=['tmax','tmin','precip','gust','snow'];
+function evalRules(){
+ if(!S.data)return[];const out=[];
+ S.data.days.forEach(d=>S.rules.forEach(r=>{const p=d.prob(r.v,r.op,+r.thr);if(p!=null&&p*100>=+r.minP)out.push({date:d.date,i:d.i,rule:r,p})}));return out}
+function ruleText(r){return r.name||`${t(r.v)} ${r.op==='>='?'≥':'≤'} ${r.thr}${UNIT[r.v]}`}
+function renderAlerts(){
+ const trig=evalRules();
+ const list=S.rules.length?S.rules.map((r,i)=>`<div class="risk"><span>${esc(ruleText(r))} · ${t('prob')} ≥ ${r.minP}%</span><button data-del="${i}">${t('del')}</button></div>`).join(''):`<div class="small">${t('noRules')}</div>`;
+ const tl=trig.length?trig.map(x=>`<div class="risk"><span>${esc(dayLabel(x.date,x.i))} · ${esc(ruleText(x.rule))}</span><b>${Math.round(x.p*100)}%</b></div>`).join(''):`<div class="small">${t('noneTriggered')}</div>`;
+ const allRisks=S.data?S.data.days.flatMap(d=>d.risks.map(r=>`<div class="risk"><span>${esc(dayLabel(d.date,d.i))} · ${t(r.k)}</span><span class="lv${r.lvl}">${t('lvl'+r.lvl)} · ${Math.round(r.p*100)}%</span></div>`)).join(''):'';
+ const notif=('Notification' in window)?(Notification.permission==='granted'?`<span class="small">✅ ${t('notifOn')}</span>`:`<button id="notifBtn">${t('enableNotif')}</button>`):'';
+ $('#view').innerHTML=`<div class="card"><h2>${t('triggered')}</h2>${tl}</div>
+ <div class="card"><h2>${t('risks')}</h2>${allRisks||`<div class="small">${t('noRisks')}</div>`}
+  <p class="small"><a href="https://meteoalarm.org" target="_blank" rel="noopener">${t('officialWarnings')}</a></p></div>
+ <div class="card"><h2>${t('myAlerts')}</h2>${list}
+ <h3>${t('addRule')}</h3><div class="row">
+  <label class="f">${t('variable')}<select id="rV">${RVARS.map(v=>`<option value="${v}">${t(v)}</option>`).join('')}</select></label>
+  <label class="f">${t('condition')}<select id="rOp"><option value=">=">≥</option><option value="<=">≤</option></select></label>
+  <label class="f">${t('threshold')}<input id="rThr" type="number" value="30" style="width:80px"></label>
+  <label class="f">${t('minProb')}<input id="rP" type="number" value="50" min="1" max="100" style="width:80px"></label>
+  <label class="f">${t('ruleName')}<input id="rN" type="text"></label>
+  <button class="pri" id="addRule" style="align-self:flex-end">${t('addRule')}</button></div>
+ <div style="margin-top:10px">${notif}</div></div>`;
+}
+function renderMethod(){
+ $('#view').innerHTML=`<div class="card"><h2>${t('methodTitle')}</h2>${['m1','m2','m3','m4','m6','m5'].map(k=>`<p>${t(k)}</p>`).join('')}</div>
+ <div class="card"><h2>${t('refs')}</h2><ol class="small">
+ <li>Krishnamurti T.N. et al. (1999), Improved weather and seasonal climate forecasts from multimodel superensemble, <i>Science</i> 285.</li>
+ <li>Krishnamurti T.N. et al. (2000), Multimodel ensemble forecasts for weather and seasonal climate, <i>Journal of Climate</i> 13.</li>
+ <li>Hagedorn R., Doblas-Reyes F.J., Palmer T.N. (2005), The rationale behind the success of multi-model ensembles in seasonal forecasting, <i>Tellus A</i> 57.</li>
+ <li>Gneiting T., Raftery A.E. (2005), Weather forecasting with ensemble methods, <i>Science</i> 310.</li>
+ <li>Raftery A.E. et al. (2005), Using Bayesian Model Averaging to calibrate forecast ensembles, <i>Monthly Weather Review</i> 133.</li>
+ <li>Krishnamurti T.N. et al. (2003), Improved skill for the anomaly correlation of geopotential heights at 500 hPa, <i>Monthly Weather Review</i> 131.</li>
+ <li>Bougeault P. et al. (2010), The THORPEX Interactive Grand Global Ensemble (TIGGE), <i>BAMS</i> 91.</li>
+ </ol></div>`;
+}
+
+/* ---------- notifications ---------- */
+function notifyIfNeeded(){
+ try{if(!('Notification' in window)||Notification.permission!=='granted')return;
+  const trig=evalRules(),key=S.loc.lat+','+S.loc.lon+':'+trig.map(x=>x.date+x.rule.id).join('|');
+  if(trig.length&&store.get('mc_lastnotif','')!==key){store.set('mc_lastnotif',key);
+   const title='Eudia · '+S.loc.name,opts={body:trig.slice(0,3).map(x=>dayLabel(x.date,x.i)+': '+ruleText(x.rule)+' ('+Math.round(x.p*100)+'%)').join('\n'),icon:'icons/icon-192.png'};
+   // iPhone (app on Home Screen) only shows notifications through the service worker
+   if(navigator.serviceWorker?.controller)navigator.serviceWorker.ready.then(r=>r.showNotification(title,opts));else new Notification(title,opts)}
+ }catch(e){}
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',async e=>{
+ const el=e.target.closest('[data-tab],[data-day],[data-del],#btnSearch,#btnGeo,#btnRefresh,#calRun,#applyModels,#resetModels,#addRule,#notifBtn,[data-res]');if(!el)return;
+ if(el.dataset.tab){S.tab=el.dataset.tab;render();window.scrollTo(0,0)}
+ else if(el.dataset.day){S.sel=+el.dataset.day;render()}
+ else if(el.dataset.del){S.rules.splice(+el.dataset.del,1);store.set('mc_rules',S.rules);render()}
+ else if(el.dataset.res){const r=JSON.parse(el.dataset.res);S.loc=r;store.set('mc_loc',r);$('#results').classList.add('hide');$('#q').value='';S.sel=0;render();load()}
+ else if(el.id==='btnSearch')doSearch();
+ else if(el.id==='btnRefresh'){load()}
+ else if(el.id==='calRun'){calibrate(true).then(()=>rebuild())}
+ else if(el.id==='btnGeo'){if(!window.isSecureContext){alert(t('geoHttps'));return}navigator.geolocation?.getCurrentPosition(p=>{S.loc={name:`${p.coords.latitude.toFixed(3)}, ${p.coords.longitude.toFixed(3)}`,lat:p.coords.latitude,lon:p.coords.longitude};store.set('mc_loc',S.loc);S.sel=0;render();load()},err=>alert(err.message))}
+ else if(el.id==='applyModels'){document.querySelectorAll('[data-mon]').forEach(c=>{const id=c.dataset.mon,w=+document.querySelector(`[data-mw="${id}"]`).value;S.mcfg[id]={on:c.checked,w:isNaN(w)?1:w}});store.set('mc_models',S.mcfg);S.tab='forecast';render();load()}
+ else if(el.id==='resetModels'){S.mcfg={};store.set('mc_models',{});render()}
+ else if(el.id==='addRule'){const thr=+$('#rThr').value,minP=+$('#rP').value;if(isNaN(thr)||isNaN(minP))return;S.rules.push({id:Date.now().toString(36),v:$('#rV').value,op:$('#rOp').value,thr,minP,name:$('#rN').value.trim()});store.set('mc_rules',S.rules);render();notifyIfNeeded()}
+ else if(el.id==='notifBtn'){await Notification.requestPermission();render();notifyIfNeeded()}
+});
+async function doSearch(){
+ const q=$('#q').value.trim();if(!q)return;const box=$('#results');
+ try{const j=await getJSON(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=${S.lang}&format=json`);
+  const r=j.results||[];box.classList.remove('hide');
+  box.innerHTML=r.length?r.map(x=>{const o={name:x.name,admin:x.admin1||'',country:x.country_code||'',lat:x.latitude,lon:x.longitude};return`<div data-res='${esc(JSON.stringify(o))}'>${esc([x.name,x.admin1,x.country].filter(Boolean).join(', '))}</div>`}).join(''):`<div>${t('noResults')}</div>`;
+ }catch(e){box.classList.remove('hide');box.innerHTML=`<div class="err">${esc(e.message)}</div>`}
+}
+$('#q').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch()});
+document.addEventListener('change',e=>{
+ const id=e.target.id;if(!['calMethod','calTruth','calDays'].includes(id))return;
+ if(id==='calMethod'){S.method=e.target.value;store.set('mc_method',S.method);if(S.method!=='prior'&&!S.cal){calibrate(false).then(()=>rebuild())}else rebuild();return}
+ if(id==='calTruth'){S.calTruth=e.target.value;store.set('mc_truth',S.calTruth)}
+ if(id==='calDays'){S.calDays=+e.target.value;store.set('mc_caldays',S.calDays)}
+ S.cal=store.get(calKey(),null);rebuild();if(!S.cal&&S.method!=='prior')calibrate(false).then(()=>rebuild());
+});
+$('#lang').addEventListener('change',e=>{S.lang=e.target.value;store.set('mc_lang',S.lang);render()});
+$('#days').addEventListener('change',e=>{S.days=+e.target.value;store.set('mc_days',S.days);S.sel=0;load()});
+$('#lang').value=S.lang;
+render();load();
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&S.updated&&Date.now()-S.updated>30*60*1000)load()});
+if('serviceWorker' in navigator&&window.isSecureContext){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+</script>
+</body>
+</html>
