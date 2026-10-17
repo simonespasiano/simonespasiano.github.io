@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Simone Spasiano</title>
+<meta name="description" content="Simone Spasiano: 25 anni nell'informatica sanitaria e nei sistemi di laboratorio. Qui raccolgo le app che costruisco.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: colonna unica tipo quaderno di laboratorio; le app sono "campioni" con codice e stato */
+:root{
+  --bg:#f4f5f2; --card:#ffffff; --ink:#1a1f1c; --muted:#5b645e; --line:#dde1db;
+  --accent:#1f3a2e; --hot:#c4371d; --ok:#2c7a4b;
+  --display:"Fraunces",Georgia,serif; --body:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root{--bg:#111513;--card:#181d1a;--ink:#e6ebe7;--muted:#9aa49d;--line:#2a322d;--accent:#9fd3b3;--hot:#ff6a4d;--ok:#5fd08c;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 var(--body)}
+.wrap{max-width:760px;margin:0 auto;padding-block:56px 40px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+.eyebrow{font:500 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+h1{font:700 clamp(40px,8vw,64px)/1.02 var(--display);margin:10px 0 16px;letter-spacing:-.01em;text-wrap:balance}
+.lead{font-size:19px;max-width:58ch;color:var(--ink)}
+.lead em{font-style:normal;color:var(--hot);font-weight:600}
+h2{font:500 26px var(--display);margin:56px 0 16px;display:flex;align-items:baseline;gap:12px}
+h2 small{font:400 13px var(--mono);color:var(--muted)}
+.apps{display:grid;gap:12px}
+.app{display:grid;grid-template-columns:64px 1fr auto;gap:16px;align-items:center;padding:16px;background:var(--card);border:1px solid var(--line);border-radius:14px;text-decoration:none;color:inherit;transition:border-color .15s,transform .15s}
+a.app:hover,a.app:focus-visible{border-color:var(--accent);transform:translateY(-1px);outline:none}
+.app img{width:64px;height:64px;border-radius:14px;display:block}
+.app h3{margin:0;font:600 18px var(--body)}
+.app p{margin:2px 0 0;color:var(--muted);font-size:14px;min-width:0}
+.code{font:500 12px var(--mono);color:var(--muted)}
+.state{font:600 12px var(--mono);padding:3px 9px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.state.live{color:var(--ok)}
+.about{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px;margin-top:8px}
+.about div{border-top:2px solid var(--accent);padding-top:10px}
+.about b{display:block;font:700 30px var(--display)}
+.about span{color:var(--muted);font-size:14px}
+footer{margin-top:64px;padding-top:16px;border-top:1px solid var(--line);font:13px var(--mono);color:var(--muted);display:flex;flex-wrap:wrap;gap:8px 20px}
+footer a{color:inherit}
+@media (max-width:480px){.app{grid-template-columns:48px 1fr}.app img{width:48px;height:48px}.app .state{grid-column:2;justify-self:start}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Cologno Monzese · Milano</div>
+  <h1>Simone Spasiano</h1>
+  <p class="lead">Da oltre 25 anni lavoro nell'informatica sanitaria, tra sistemi di laboratorio, diagnostica clinica e integrazioni HL7. Qui raccolgo le <em>app</em> che costruisco per il lavoro, la famiglia e la comunità.</p>
+
+  <h2>App <small>pubblicate</small></h2>
+  <div class="apps">
+    <a class="app" href="app/chierego/">
+      <img src="app/chierego/icon-192.png" alt="">
+      <div><span class="code">/app/chierego</span><h3>Chierego da Valfredda</h3><p>Trekking sul Monte Baldo con mappa, GPS, avanzamento e profilo altimetrico. Funziona anche senza rete.</p></div>
+      <span class="state live">online</span>
+    </a>
+  </div>
+
+  <h2>Chi sono</h2>
+  <div class="about">
+    <div><b>25+</b><span>anni di software per laboratori e sanità</span></div>
+    <div><b>LIS</b><span>pre-sales, vendita B2B e progetti nelle aziende sanitarie</span></div>
+    <div><b>IT · EN</b><span>lavoro in italiano e in inglese</span></div>
+  </div>
+
+  <footer><span>© 2026 Simone Spasiano</span><a href="https://github.com/spakimo">github.com/spakimo</a></footer>
+</div>
+</body>
+</html>
