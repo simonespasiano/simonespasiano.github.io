@@ -1,6 +1,6 @@
-# spakimo.github.io
+# simonespasiano.github.io
 
-Sito personale di Simone Spasiano: https://spakimo.github.io/
+Sito personale di Simone Spasiano: https://simonespasiano.github.io/
 
 Ogni app vive in una cartella sotto `app/` con il suo `index.html`:
 
